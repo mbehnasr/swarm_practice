@@ -1,0 +1,110 @@
+# version: "3"
+# services:
+#   account:
+#     build:
+#       context: ./
+#       dockerfile: Dockerfile.account
+#     volumes:
+#       - ./users.json:/app/users.json
+#   shop:
+#     build:
+#       context: ./
+#       dockerfile: Dockerfile.shop
+#     volumes:
+#       - ./users.json:/app/users.json
+#       - ./products.json:/app/products.json
+#       - ./carts.json:/app/carts.json
+#     environment:
+#       ACCOUNT_MICROSERVICE_URL: http://account:8000
+#   order:
+#     build:
+#       context: ./
+#       dockerfile: Dockerfile.order
+#     volumes:
+#       - ./users.json:/app/users.json
+#       - ./order.json:/app/order.json
+#       - ./carts.json:/app/carts.json
+#     environment:
+#       ACCOUNT_MICROSERVICE_URL: http://account:8000
+#       SHOP_MICROSErVICE_URL: http://shop:8000
+#   nginx:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile_nginx
+#     ports:
+#       - 80:80
+#     volumes:
+#       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+#     entrypoint: ["./entrypoint_nginx.sh"]
+#     depends_on:
+#       account:
+#         condition: service_started
+#       shop:
+#         condition: service_started
+#       order:
+#         condition: service_started
+#
+
+version: "3"
+services:
+  account:
+    build:
+      context: ./
+      dockerfile: Dockerfile.account
+    volumes:
+      - ./users.json:/app/users.json
+    networks:
+      - my_network
+
+  shop:
+    build:
+      context: ./
+      dockerfile: Dockerfile.shop
+    volumes:
+      - ./users.json:/app/users.json
+      - ./products.json:/app/products.json
+      - ./carts.json:/app/carts.json
+    environment:
+      ACCOUNT_MICROSERVICE_URL: http://account:8000
+    networks:
+      - my_network
+
+  order:
+    build:
+      context: ./
+      dockerfile: Dockerfile.order
+    volumes:
+      - ./users.json:/app/users.json
+      - ./order.json:/app/order.json
+      - ./carts.json:/app/carts.json
+    environment:
+      ACCOUNT_MICROSERVICE_URL: http://account:8000
+      SHOP_MICROSERVICE_URL: http://shop:8000
+    networks:
+      - my_network
+
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile_nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    entrypoint: ["./entrypoint_nginx.sh"]
+    networks:
+      - my_network
+
+  haproxy:
+    image: haproxy:2.8.1-alpine
+    ports:
+      - 80:80
+    volumes: 
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+    depends_on:
+      - nginx
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    driver: bridge
+

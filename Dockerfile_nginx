@@ -1,0 +1,13 @@
+# Use the existing Nginx image as the base image
+FROM nginx:latest
+
+# Copy your custom entrypoint script to the container
+COPY entrypoint_nginx.sh /entrypoint_nginx.sh
+
+
+RUN apt-get update && apt-get install -y netcat-openbsd
+
+# Update package list and install netcat
+
+# Set the entrypoint to your custom script
+ENTRYPOINT ["/entrypoint_nginx.sh"]
